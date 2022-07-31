@@ -17,7 +17,7 @@ yc compute instance list | grep vm-
 
 2. Подключился к хосту по SSH. Добавил репозиторий и установил серверную и клиентскую часть PostgreSQL 14.
 
-```json
+```
  dpkg -l | grep postgresq
 ii  pgdg-keyring                          2018.2                            all          keyring for apt.postgresql.org
 ii  postgresql                            14+241.pgdg20.04+1                all          object-relational SQL database (supported version)
@@ -28,7 +28,7 @@ ii  postgresql-common                     241.pgdg20.04+1                   all 
 ```
 
 3. Кластер рабоатет
-```json
+```
 $ sudo -u postgres pg_lsclusters
 Ver Cluster Port Status Owner    Data directory              Log file
 14  main    5432 online postgres /var/lib/postgresql/14/main /var/log/postgresql/postgresql-14-main.log
@@ -36,7 +36,7 @@ Ver Cluster Port Status Owner    Data directory              Log file
 ```
 
 4. Создал БД с таблице, добавил поле
-```json
+```
 
 postgres=# create database marmelad;
 CREATE DATABASE
@@ -58,7 +58,7 @@ c1
 ```
 
 5. В это раз зашел под пользователем postgres и остановил сервис
-```json
+```
 postgres@fhm58udq7pfkfqp03ks9:~$ pg_lsclusters 
 Ver Cluster Port Status Owner    Data directory              Log file
 14  main    5432 online postgres /var/lib/postgresql/14/main /var/log/postgresql/postgresql-14-main.log
@@ -73,7 +73,7 @@ Ver Cluster Port Status Owner    Data directory              Log file
 ```
 
 6. Создал network-ssd диск и добавил на ВМ
-```json
+```
  yc compute disk create --zone ru-central1-a --type network-ssd --size 10G
 done (6s)
 id: fhm2ma48uhs21jvnktq7
@@ -100,7 +100,7 @@ secondary_disks:
 ```
 
 Проверил на ВМ видит ли новый диск.
-```json
+```
 yc-user@fhm58udq7pfkfqp03ks9:~$ lsblk 
 NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
 vda    252:0    0   5G  0 disk 
@@ -110,7 +110,7 @@ vdb    252:16   0  10G  0 disk
 ```
 
 7. На второ диске создао файловую систему EXT4 и смотнировал, владельцем определил пользователя postgres
-```json
+```
 root@fhm58udq7pfkfqp03ks9:~# lsblk -f
 NAME   FSTYPE LABEL  UUID                                 FSAVAIL FSUSE% MOUNTPOINT
 vda                                                                      
@@ -126,7 +126,7 @@ drwxr-xr-x 3 postgres postgres 4096 Jul 31 16:34 /mnt/data
 ```
 
 8. Перенес директорию с фалами БД на смонтированный диск
-```json
+```
 root@fhm58udq7pfkfqp03ks9:~# du -sh /var/lib/postgresql /mnt/data
 12K     /var/lib/postgresql
 51M     /mnt/data
@@ -167,7 +167,7 @@ root@fhm58udq7pfkfqp03ks9:~# tree -d /mnt/data/
 ```
 
 9. Запустить после переноса дир. с БД не получилось, так как нет файлов БД
-```json
+```
 
 postgres@fhm58udq7pfkfqp03ks9:~$ pg_lsclusters 
 Ver Cluster Port Status Owner     Data directory              Log file
@@ -179,7 +179,7 @@ Error: /var/lib/postgresql/14/main is not accessible or does not exist
 ```
 
 10. Заменил в конф.файле путь до файлов с БД, кластер запустился.	
-```json
+```
 yc-user@fhm58udq7pfkfqp03ks9:~$ sudo grep -ir "data_dir" /etc/postgresql/14/main/postgresql.conf 
 #data_directory = '/var/lib/postgresql/14/main'         # use data in another directory
 data_directory = '/mnt/data/14/main'            # use data in another directory
@@ -199,7 +199,7 @@ Ver Cluster Port Status Owner    Data directory    Log file
 
 
 11. Все файлы принадлежазие ранее созданной БД (marmelad) были целеком в другуй директорию и после старта ничему было терятся.
-```json
+```
 
 postgres=# 
 postgres=# \l
@@ -236,7 +236,7 @@ marmelad=# select * from melom;
 
 12. Задачние с *
 12.1 Ранее сдела снепшот с диска с готовым набором серверно и клиентской частью PostgreSQL.
-```json
+```
 $ yc compute instance create --name "vm-pg-hw006-host-2" --zone ru-central1-a --network-interface subnet-id=e9bl3fu9obful2c43udh,nat-ip-version=ipv4 --create-boot-disk snapshot-name=vm-pg-14 --ssh-key ~/.ssh/id_rsa_first.pub --labels tag=otus-lb
 done (44s)
 id: fhm0i7ffvce7u4jkdltl
@@ -249,7 +249,7 @@ id: fhm0i7ffvce7u4jkdltl
 
 
 12.2  На ВМ vm-pg-hw006-host-1 остановил кластер и отмантировал диск с ранее перенесенной табличным пространством 
-```json
+```
 postgres@fhm58udq7pfkfqp03ks9:~$ pg_lsclusters 
 Ver Cluster Port Status Owner    Data directory    Log file
 14  main    5432 online postgres /mnt/data/14/main /var/log/postgresql/postgresql-14-main.log
@@ -275,7 +275,7 @@ vdb
 ``` 
 
 Последовательность отключения диска от инстанса
-```json
+```
 
 yc compute instance detach-disk --name vm-pg-hw006-host-1 --disk-id fhm2ma48uhs21jvnktq7
 done (9s)
@@ -308,7 +308,7 @@ yc-user@fhm58udq7pfkfqp03ks9:~$ dmesg -T | tail
 
 
 12.3 Подлючил диск и смонтировал на второй ВМ (vm-pg-hw006-host-2)
-```json
+```
  yc compute instance attach-disk vm-pg-hw006-host-2 --disk-id fhm2ma48uhs21jvnktq7
 done (4s)
 
@@ -321,7 +321,7 @@ secondary_disks:
 ```
 
 Раздел смонирровал в ново созданную директорию.
-```json
+```
 root@fhm0i7ffvce7u4jkdltl:~# lsblk -f
 NAME   FSTYPE LABEL  UUID                                 FSAVAIL FSUSE% MOUNTPOINT
 vda                                                                      
@@ -339,7 +339,7 @@ drwx------ 2 postgres postgres 16384 Jul 31 16:34 lost+found
 ```
 
 12.4 Поменял в конфиге путь до файлов с БД, т.е. все что делал в задаче без звездочки
-```json
+```
 root@fhm0i7ffvce7u4jkdltl:~# cd /etc/postgresql/14/main/
 
 root@fhm0i7ffvce7u4jkdltl:/etc/postgresql/14/main# vim postgresql.conf 
@@ -350,7 +350,7 @@ data_directory = '/mnt/data/14/main'		# use data in another directory
 ```
 
 12.5 Переклюился в пользователя postgres и подключился к БД marmelad. Строку ранее добавленную, вывел на экран.
-```json
+```
 postgres@fhm0i7ffvce7u4jkdltl:/etc/postgresql/14/main$ pg_lsclusters 
 Ver Cluster Port Status Owner    Data directory    Log file
 14  main    5432 down   postgres /mnt/data/14/main /var/log/postgresql/postgresql-14-main.log
