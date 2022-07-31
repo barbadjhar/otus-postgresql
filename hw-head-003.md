@@ -2,7 +2,7 @@
 
 Все окурежниие созадвал в Яндекс Облаке. Первым делом созад типовой инстанс через cli yc.
 
-```json
+```
 $ yc compute instance create --name "vm-postgres-p1" --zone ru-central1-a --network-interface subnet-id=e9bl3fu9obful2c43udh,nat-ip-version=ipv4 --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-2004-lts --ssh-key ~/.ssh/id_rsa_first.pub 
 
 done (21s)
@@ -10,7 +10,7 @@ done (21s)
 ```
 
 Проверил существование ВМ 
-```json
+```
 $ yc compute instance get --full fhm2rr1reb9iomjrrrg4
 
 id: fhm2rr1reb9iomjrrrg4
@@ -28,7 +28,7 @@ id: fhm2rr1reb9iomjrrrg4
 
 
 Установил docker, psql и создал диреткорию для хранения данных СУБД
-```json
+```
 
 root@fhm2rr1reb9iomjrrrg4:~# dpkg -l | grep -e docker -e postgres
 ii  docker                                1.5-2                             all          transitional package
@@ -51,7 +51,7 @@ uid=1000(yc-user) gid=1001(yc-user) groups=1001(yc-user),998(docker)
 ```
 
 Поднял контейнер с серверной и клиентской частью Postgres
-```json
+```
 yc-user@fhm2rr1reb9iomjrrrg4:~$ docker image ls
 REPOSITORY        TAG       IMAGE ID       CREATED         SIZE
 postgres          14        1133a9cdc367   9 days ago      376MB
@@ -76,7 +76,7 @@ yc-user@fhm2rr1reb9iomjrrrg4:~$ docker run -it --rm --network pg-net --name pg-c
 
 
 Проверил что контейнеры запущены
-```json
+```
 yc-user@fhm2rr1reb9iomjrrrg4:~$ docker ps -a
 CONTAINER ID   IMAGE         COMMAND                  CREATED          STATUS                    PORTS                                       NAMES
 4dcee4f829a4   postgres:14   "docker-entrypoint.s…"   42 minutes ago   Up 42 minutes             5432/tcp                                    pg-client
@@ -86,7 +86,7 @@ c53a321e8ffe   hello-world   "/hello"                 18 hours ago     Exited (0
 
 
 Из контейнра pg-client создал БД с таблицой и добавил данные. Плюс проверил подключение с локального клиента.
-```json
+```
 postgres=# CREATE DATABASE test;
 CREATE DATABASE
 postgres=# \l
@@ -124,7 +124,7 @@ test=# \d
 
 
 Добавил данных
-```json
+```
 test=# INSERT INTO gogrgy (name, email)
 test-# VALUES ('John', 'abc@mail.ru');
 INSERT 0 1
@@ -138,7 +138,7 @@ test=# select * from gogrgy;
 
 
 Проверил что локально подключается 
-```json
+```
 yc-user@fhm2rr1reb9iomjrrrg4:~$ psql -h localhost -U postgres -d postgres
 postgres=# \c test
 psql (12.11 (Ubuntu 12.11-0ubuntu0.20.04.1), server 14.4 (Debian 14.4-1.pgdg110+1))
@@ -166,7 +166,7 @@ test=# select * from gogrgy;
 
 Удалил контейнер с сервером pd-server  `docker rm pg-server` проверил что данные в `/var/lib/postgres` не пустое и есть файлы.
 Создал заново контейнер pg-server, подключился к нему клиентом, убедился что данные есть с примонтированного каталога и добавил еще одну строку.
-```json
+```
 yc-user@fhm2rr1reb9iomjrrrg4:~$ docker rm pg-server 
 pg-server
 
@@ -191,7 +191,7 @@ yc-user@fhm2rr1reb9iomjrrrg4:~$ sudo du -sh /var/lib/postgres/
 
 
 Клиентом подключился 
-```json
+```
 yc-user@fhm2rr1reb9iomjrrrg4:~$ docker run -it --rm --network pg-net --name pg-client postgres:14 psql -h pg-server -U postgres
 Password for user postgres: 
 psql (14.4 (Debian 14.4-1.pgdg110+1))
@@ -241,7 +241,7 @@ test=# \q
 
 
 Проверил с локального клиента что доступен БД
-```json
+```
 yc-user@fhm2rr1reb9iomjrrrg4:~$ psql -h localhost -U postgres -d postgres
 Password for user postgres: 
 psql (12.11 (Ubuntu 12.11-0ubuntu0.20.04.1), server 14.4 (Debian 14.4-1.pgdg110+1))
