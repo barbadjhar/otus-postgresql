@@ -211,26 +211,8 @@ testdb=# ALTER default privileges in schema tesnm grant select on tables TO read
 ALTER DEFAULT PRIVILEGES
 
 ```
-Что бы все создавалось в схеме tesnm можно поправить переменную show_path
-```
-testdb=# show search_path 
-testdb-# ;
-   search_path   
------------------
- "$user", public
-(1 row)
 
-testdb=# set search_path TO "$user", tesnm, public;
-SET
-
-testdb=# show search_path;
-      search_path       
-------------------------
- "$user", tesnm, public
-(1 row)
-```
-
-Подсключился к testdb от пользователя testread и поробовал вывести таблицу, облом. Похоже на то что ALTER на все таблицы создан на будущие объекты, использовал команду GRANT на текущий обчект так отработалоло.
+Подключился к testdb от пользователя testread и поробовал вывести таблицу, облом. Похоже на то что ALTER на все таблицы создан на будущие объекты, использовал команду GRANT на текущий объект так отработало.
 ```
 testdb=# \c testdb testread 
 Password for user testread: 
